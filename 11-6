@@ -1,0 +1,95 @@
+#this program displays 2 letters, mirrored and normal with 4 orientations. Participants are asked 
+#to identify whether stimuli is mirrored or normal while block1 has sound and block2 has no sound, 
+#data is printed out and appended into csv(still need 2 do csv)
+#Data Output: 
+#   Letter, 
+#   Suppression(True or False), 
+#   Correct(whether answer was correct), 
+#   ResponseTime in seconds
+#   can include orientation of letter, version of letter(mirrored or normal), what key was pressed
+
+from psychopy import visual, core, event, sound
+import random, csv
+
+#create a window
+win = visual.Window([800,600], monitor = "testMonitor", units = "pix", color = "white")
+
+#Stimulus
+stimulus = {
+    ("F", "normal"): "UM_F_0.jpg", ("F", "mirrored"): "M_F_0.jpg",
+    ("R", "normal"): "UM_R_0.jpg", ("R","mirrored"): "M_R_0.jpg" #make sure these correspond
+    }
+stim = visual.ImageStim(win, size = (300,300))
+orientations = [0, 45, 135, 180]
+suppSound = sound.Sound("waves.mp3", loops = -1)
+
+#results and rt clock
+results = []
+clock = core.Clock()
+
+#Block Trials
+block1 = [(letter, version, orientation, True) #suppression on
+            for letter in ["F","R"]
+            for version in ["normal", "mirrored"]
+            for orientation in orientations]
+
+block2 = [(letter, version, orientation, False) #suppression off
+            for letter in ["F","R"]
+            for version in ["normal", "mirrored"]
+            for orientation in orientations]
+            
+#Randomize order in block trials
+random.shuffle(block1)
+random.shuffle(block2)
+
+#start sound
+suppSound.play()
+#Trial loop block 1
+for letter, version, orientation, supp in block1:
+    stim.image = stimulus[(letter, version)]
+    stim.ori = orientation
+
+    stim.draw()
+    win.flip()
+    
+    clock.reset() #reset clock before keyPress
+    keyPress, responseTime = event.waitKeys(keyList=["m", 'return', 'escape'], timeStamped = clock)[0]
+    
+    if keyPress == 'escape': #exit program if needed 
+        win.close()
+        core.quit()
+
+    #correct response
+    correct = (keyPress == 'm') if version == "mirrored" else (keyPress == 'return')
+    
+    results.append([letter, supp, correct, responseTime])
+    
+    core.wait(0.5)
+        
+suppSound.stop()
+
+#Trial loop block 2
+for letter, version, orientation, supp in block2:
+    stim.image = stimulus[(letter, version)]
+    stim.ori = orientation
+
+    stim.draw()
+    win.flip()
+    
+    clock.reset() #reset clock before keyPress
+    keyPress, responseTime = event.waitKeys(keyList=["m", 'return', 'escape'], timeStamped = clock)[0]
+    
+    #correct response
+    correct = (keyPress == 'm') if version == "mirrored" else (keyPress == 'return')
+    if keyPress == 'escape': #exit program if needed 
+        win.close()
+        core.quit()
+    
+    results.append([letter, supp, correct, responseTime])
+    
+    core.wait(0.5)
+
+#Exit
+print(results)
+win.close()
+core.quit()
